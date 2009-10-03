@@ -1,0 +1,121 @@
+sfPropelRowLevelAccessBehavior plugin
+==============
+
+The `sfPropelRowLevelAccessBehavior` is a symfony plugin that adds 
+authorization on a per row basis; also known als Row Level Access or 
+Record Level Access.
+
+This plugin provides you the means to enable Row Level Access in your 
+application by maintaining just a configuration file. The rest is done
+automatically.
+
+Installation
+------------
+
+  * Install the plugin
+
+        $ symfony plugin:install sfPropelRowLevelAccessBehavior
+
+  * Check your Propel settings
+        
+        Make sure propel.builder.addBehaviors setting in config/propel.ini is 
+        set to true.
+        
+  * Clear your cache
+  
+        $ symfony cc
+
+  * Create a new YML file in your /config folder named `rla.yml`
+  
+Setting up Row Level Access
+---------------------------
+
+With this plugin you can create an association between a field in a model 
+and a method in your user class. The general idea behind this is that that which
+the user may view is limited by his properties.
+
+For example:
+The currently signed on user may only see the Contacts of the Customer he 
+represents. To be able to make this relation you would need a method 
+getCustomerId in the myUser class and 3 lines in the configuration file 
+rla.yml, which look like this
+           
+           $ Contact:
+           $   field: ContactPeer::CUSTOMER_ID
+           $   user_method: getCustomerId
+ 
+What this code does is create a relation between the CUSTOMER_ID field of 
+the Contact model and that which is returned from `myUser->getCustomerId()`.
+Thus, if `getCustomerId` returns 1, only the records where CUSTOMER_ID is equal 
+to 1 are returned in the Contact model.
+
+Joining tables
+--------------
+
+Sometimes the data on which you want to place a relation does not reside in 
+same table. To solve this the plugin support adding joins to the relation 
+definition.
+
+For example:
+The currently signed on user may only see the Orders for a certain Customer 
+but Orders are not directly related to Customer but to Contact. To model this 
+you would add the next lines to your `rla.yml`,
+
+           $ Order:
+           $   field: ContactPeer::CUSTOMER_ID
+           $   user_method: getCustomerId
+           $   joins:
+           $     Contact: [OrderPeer::CONTACT_ID, ContactPeer::ID]
+
+The `joins` index can contain an array of join statements. The key is not 
+mandatory but it is advised to give it the name of the model which you
+are joining for readability.
+The first parameter of the join is the field from which you want to join and
+the second parameter is the field to which you want to join.
+By doing this the Contact model becomes available to use in the `field` index.
+
+Associating multiple values
+---------------------------
+Situations occur where you want to use multiple values to check against. 
+For example when the user is allowed to see the information of multiple 
+customers.
+
+This can be solved by returning an array from the User's method, thus if 
+the `getCustomerId` returns `array(1,2)` instead of `1` the user will be 
+associated with both customers.
+
+Extensibility
+-------------
+If all the power offered by the default behaviour is not enough then you can 
+always write your own Row Level Access Rule!
+
+The actual handling of the restriction logic is done by supporting classes 
+which are extended from `sfRlaRule`. It is advised to place you own classes in
+your project's `/lib` folder.
+
+You can create your own rule by extending from this class and adding getters 
+and setters for all parameters which can be defined in the `rla.yml` file.
+You should at least have a setter for every parameter, they will automatically 
+be called when your rule should apply.
+
+The name of the setter is equal to `set<CamelCase name of param>`. Thus if you 
+have a parameter `user_method`, the name of the setter becomes `setUserMethod`.
+
+In addition to these getters and setters you class must override the `generate`
+method and manipulate the Criteria object to get the wanted results. 
+NOTE: Do not forget to return the Criteria object!
+
+You can instruct the plugin to use your Rule instead of the default in 2 ways,
+
+*   Set a new default `type` by adding the option 
+    `app_row_level_access_default_type` in your `app.yml` and give it the 
+    name of your class as value.
+
+*   Set the `type` parameter in the `rla.yml` to the name of your class.
+
+           $ Contact:
+           $   type: myRowLevelAccessRule
+           $   myParam: 42
+
+You can take a look at the `sfRlaRuleFieldEqualsUserMethod` class, which is 
+the default rule, to see an example of a working rule.

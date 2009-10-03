@@ -1,0 +1,7 @@
+Customer:
+  field: CustomerPeer::ID
+  user_method: getCustomerId
+
+Contact:
+  field: ContactPeer::CUSTOMER_ID
+  user_method: getCustomerId
