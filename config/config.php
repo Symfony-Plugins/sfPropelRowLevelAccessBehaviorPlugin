@@ -7,8 +7,10 @@ sfPropelBehavior::registerHooks('rla', array(
 ));
 
 // add this behavior to the models present in the configuration yaml
-$rules = sfRowLevelAccessBehavior::loadYaml();
-foreach ($rules as $class => $rule)
+if ($rules = sfRowLevelAccessBehavior::loadYaml())
 {
-	sfPropelBehavior::add($class, array('rla'));
+	foreach ($rules as $class => $rule)
+	{
+		sfPropelBehavior::add($class, array('rla'));
+	}
 }
