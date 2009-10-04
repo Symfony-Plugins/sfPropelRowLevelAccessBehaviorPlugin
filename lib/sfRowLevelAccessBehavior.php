@@ -41,7 +41,7 @@ class sfRowLevelAccessBehavior
 		$file = sfConfig::get('sf_config_dir').'/rla.yml';
 		if (!is_readable($file))
 		{
-			throw new Exception("Unable to load Row Level Access configuration, expected to be able to read schema-rla.yml");
+			throw new Exception("Unable to load Row Level Access configuration, expected to be able to read rla.yml");
 		}
 	
 		// load the rules array and replace every entry with an 
